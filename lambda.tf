@@ -1,4 +1,4 @@
-resource "aws_iam_role" "insight-support-extensible-ingress-lambda" {
+resource "aws_iam_role" "insight-support-extensible-ingress-lambda-iam-role" {
   name = "insight-support-extensible-ingress-lambda"
 
   assume_role_policy = <<EOF
@@ -40,7 +40,7 @@ resource "aws_lambda_permission" "ea_emr_org_event_lambda" {
 resource "aws_lambda_function" "insight-support-extensible-ingress-lambda" {
   filename         = "lambda_function_payload.zip"
   function_name    = "insight-support-extensible-ingress-lambda"
-  role             = aws_iam_role.insight-support-extensible-ingress-lambda.arn
+  role             = aws_iam_role.insight-support-extensible-ingress-lambda-iam-role.arn
   source_code_hash = filebase64sha256("lambda_function_payload.zip")
   runtime          = "nodejs12.x"
   handler          = "index.handler"
@@ -57,7 +57,7 @@ resource "aws_sns_topic_subscription" "insight-support-extensible-ingress-lambda
   topic_arn = aws_sns_topic.insight-support-extensible-ingress-topic.arn
 }
 
-resource "aws_iam_policy" "insight-support-extensible-ingress-lambda-logging" {
+resource "aws_iam_policy" "insight-support-extensible-ingress-lambda-logging-policy" {
   name        = "insight-support-extensible-ingress-lambda-logging"
   path        = "/"
   description = "IAM policy for logging from a lambda"
@@ -80,7 +80,7 @@ resource "aws_iam_policy" "insight-support-extensible-ingress-lambda-logging" {
 EOF
 }
 
-resource "aws_iam_role_policy_attachment" "lambda_logs" {
-  role       = aws_iam_role.insight-support-extensible-ingress-lambda
-  policy_arn = aws_iam_policy.insight-support-extensible-ingress-lambda-logging.arn
+resource "aws_iam_role_policy_attachment" "insight-support-extensible-ingress-lambda-logging-policy-attachment" {
+  role       = aws_iam_role.insight-support-extensible-ingress-lambda-iam-role.name
+  policy_arn = aws_iam_policy.insight-support-extensible-ingress-lambda-logging-policy.arn
 }
