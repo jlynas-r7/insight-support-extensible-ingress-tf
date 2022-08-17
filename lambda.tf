@@ -56,3 +56,31 @@ resource "aws_sns_topic_subscription" "insight-support-extensible-ingress-lambda
   protocol  = "lambda"
   topic_arn = aws_sns_topic.insight-support-extensible-ingress-topic.arn
 }
+
+resource "aws_iam_policy" "insight-support-extensible-ingress-lambda-logging" {
+  name        = "insight-support-extensible-ingress-lambda-logging"
+  path        = "/"
+  description = "IAM policy for logging from a lambda"
+
+  policy = <<EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Action": [
+        "logs:CreateLogGroup",
+        "logs:CreateLogStream",
+        "logs:PutLogEvents"
+      ],
+      "Resource": "arn:aws:logs:*:*:*",
+      "Effect": "Allow"
+    }
+  ]
+}
+EOF
+}
+
+resource "aws_iam_role_policy_attachment" "lambda_logs" {
+  role       = aws_iam_role.insight-support-extensible-ingress-lambda
+  policy_arn = aws_iam_policy.insight-support-extensible-ingress-lambda-logging.arn
+}
