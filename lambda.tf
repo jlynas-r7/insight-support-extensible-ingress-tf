@@ -25,6 +25,18 @@ EOF
 }
 
 
+resource "aws_cloudwatch_log_group" "insight-support-extensible-ingress-lambda-cloudwatch" {
+  name              = "/aws/lambda/${aws_lambda_function.insight-support-extensible-ingress-lambda.function_name}"
+  retention_in_days = 30
+}
+
+resource "aws_lambda_permission" "ea_emr_org_event_lambda" {
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.insight-support-extensible-ingress-lambda.function_name
+  principal     = "sns.amazonaws.com"
+  source_arn    = aws_sns_topic.insight-support-extensible-ingress-topic.arn
+}
+
 resource "aws_lambda_function" "insight-support-extensible-ingress-lambda" {
   filename         = "lambda_function_payload.zip"
   function_name    = "insight-support-extensible-ingress-lambda"
