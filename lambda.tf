@@ -1,36 +1,9 @@
-resource "aws_iam_role" "insight-support-extensible-ingress-lambda-iam-role" {
-  name = "insight-support-extensible-ingress-lambda"
-
-  assume_role_policy = <<EOF
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Action": "sts:AssumeRole",
-      "Principal": {
-        "Service": "lambda.amazonaws.com"
-      },
-      "Effect": "Allow",
-      "Sid": ""
-    }
-  ]
-}
-EOF
-
-  tags = {
-    Product = "insight-support"
-    Name    = "insight-support-extensible-ingress-lamdba-iam-role"
-  }
-
-}
-
-
 resource "aws_cloudwatch_log_group" "insight-support-extensible-ingress-lambda-cloudwatch" {
   name              = "/aws/lambda/${aws_lambda_function.insight-support-extensible-ingress-lambda.function_name}"
   retention_in_days = 30
 }
 
-resource "aws_lambda_permission" "ea_emr_org_event_lambda" {
+resource "aws_lambda_permission" "insight-support-extensible-ingress-lambda-permisson" {
   action        = "lambda:InvokeFunction"
   function_name = aws_lambda_function.insight-support-extensible-ingress-lambda.function_name
   principal     = "sns.amazonaws.com"
@@ -57,30 +30,96 @@ resource "aws_sns_topic_subscription" "insight-support-extensible-ingress-lambda
   topic_arn = aws_sns_topic.insight-support-extensible-ingress-topic.arn
 }
 
-resource "aws_iam_policy" "insight-support-extensible-ingress-lambda-logging-policy" {
-  name        = "insight-support-extensible-ingress-lambda-logging"
-  path        = "/"
-  description = "IAM policy for logging from a lambda"
 
-  policy = <<EOF
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Action": [
-        "logs:CreateLogGroup",
-        "logs:CreateLogStream",
-        "logs:PutLogEvents"
-      ],
-      "Resource": "arn:aws:logs:*:*:*",
-      "Effect": "Allow"
+data "aws_iam_policy_document" "insight-support-extensible-ingress-lambda-policy" {
+  statement {
+    effect  = "Allow"
+    actions = ["sts:AssumeRole"]
+    principals {
+      type        = "Service"
+      identifiers = ["lambda.amazonaws.com"]
     }
-  ]
-}
-EOF
+  }
 }
 
-resource "aws_iam_role_policy_attachment" "insight-support-extensible-ingress-lambda-logging-policy-attachment" {
-  role       = aws_iam_role.insight-support-extensible-ingress-lambda-iam-role.name
-  policy_arn = aws_iam_policy.insight-support-extensible-ingress-lambda-logging-policy.arn
+data "aws_iam_policy_document" "insight-support-dynamo-db-table-policy" {
+  statement {
+    effect  = "Allow"
+    actions = [
+      "dynamodb:Get*",
+      "dynamodb:Delete*",
+      "dynamodb:Update*",
+      "dynamodb:PutItem"
+    ]
+    resources = ["arn:aws:dynamodb:*:*:table/insight-support-extensible-ingress"]
+  }
+  statement {
+    effect  = "Allow"
+    actions = [
+      "logs:CreateLogGroup",
+      "logs:CreateLogStream",
+      "logs:PutLogEvents"
+    ]
+    resources = ["arn:aws:logs:*:*:*"]
+  }
 }
+
+resource "aws_iam_role" "insight-support-extensible-ingress-lambda-iam-role" {
+  name               = "insight-support-extensible-ingress-lambda-iam-role"
+  assume_role_policy = data.aws_iam_policy_document.insight-support-extensible-ingress-lambda-policy.json
+  tags               = {
+    Product = "insight-support"
+    Name    = "insight-support-extensible-ingress-lamdba-iam-role"
+  }
+}
+
+resource "aws_iam_role_policy" "insight-support-extensible-ingress-notification-policy" {
+  name   = "insight-support-extensible-ingress-notification-policy"
+  role   = aws_iam_role.insight-support-extensible-ingress-lambda-iam-role.id
+  policy = data.aws_iam_policy_document.insight-support-dynamo-db-table-policy.json
+}
+
+
+resource "aws_dynamodb_table" "insight-support-extensible-ingress" {
+  name           = "insight-support-extensible-ingress"
+  hash_key       = "id"
+  billing_mode   = "PROVISIONED"
+  read_capacity  = 10
+  write_capacity = 10
+  attribute {
+    name = "id"
+    type = "N"
+  }
+  tags = {
+    Product = "insight-support"
+    Name    = "insight-support-extensible-ingress-dynamodb-table"
+  }
+}
+
+#resource "aws_appautoscaling_target" "insight-support-dynamodb-table-write-target" {
+#  max_capacity       = 10000
+#  min_capacity       = 5
+#  resource_id        = "table/insight-support-extensible-ingress-dynamodb-table"
+#  scalable_dimension = "dynamodb:table:WriteCapacityUnits"
+#  service_namespace  = "dynamodb"
+#}
+#
+#resource "aws_appautoscaling_policy" "insight-support-dynamodb-table-write-policy" {
+#  name               = "DynamoDBWriteCapacityUtilization:${aws_appautoscaling_target.insight-support-dynamodb-table-write-target.resource_id}"
+#  policy_type        = "TargetTrackingScaling"
+#  resource_id        = aws_appautoscaling_target.insight-support-dynamodb-table-write-target.resource_id
+#  scalable_dimension = aws_appautoscaling_target.insight-support-dynamodb-table-write-target.scalable_dimension
+#  service_namespace  = aws_appautoscaling_target.insight-support-dynamodb-table-write-target.service_namespace
+#
+#  target_tracking_scaling_policy_configuration {
+#    predefined_metric_specification {
+#      predefined_metric_type = "DynamoDBWriteCapacityUtilization"
+#    }
+#
+#    target_value = 80
+#  }
+#}
+
+
+
+
