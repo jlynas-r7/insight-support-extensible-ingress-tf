@@ -88,7 +88,7 @@ resource "aws_dynamodb_table" "insight-support-extensible-ingress" {
   write_capacity = 20
   attribute {
     name = "id"
-    type = "N"
+    type = "S"
   }
   tags = {
     Product = "insight-support"
