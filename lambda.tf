@@ -84,8 +84,8 @@ resource "aws_dynamodb_table" "insight-support-extensible-ingress" {
   name           = "insight-support-extensible-ingress"
   hash_key       = "id"
   billing_mode   = "PROVISIONED"
-  read_capacity  = 10
-  write_capacity = 10
+  read_capacity  = 20
+  write_capacity = 20
   attribute {
     name = "id"
     type = "N"
@@ -95,6 +95,7 @@ resource "aws_dynamodb_table" "insight-support-extensible-ingress" {
     Name    = "insight-support-extensible-ingress-dynamodb-table"
   }
 }
+
 
 #resource "aws_appautoscaling_target" "insight-support-dynamodb-table-write-target" {
 #  max_capacity       = 10000
