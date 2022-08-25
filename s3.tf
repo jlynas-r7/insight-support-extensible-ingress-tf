@@ -2,23 +2,25 @@ resource "aws_s3_bucket" "insight-support-extensible-ingress-s3" {
   bucket        = "insight-support-extensible-ingress-s3"
   force_destroy = true
 
-  lifecycle_rule {
-    id      = "insight-support-extensible-ingress-s3-object-lifecycle-expire-rule"
-    enabled = true
+  tags = {
+    Product = "insight-support"
+    Name    = "insight-support-extensible-ingress-s3"
+  }
+}
+
+resource "aws_s3_bucket_lifecycle_configuration" "bucket-config" {
+  bucket = aws_s3_bucket.insight-support-extensible-ingress-s3.bucket
+  rule {
+    id = "file-expiration-rule"
 
     expiration {
       days = 1
     }
 
-    tags = {
-      Product = "insight-support"
-      Name    = "insight-support-extensible-ingress-s3-lifecycle-monthly-expire-rule"
+    abort_incomplete_multipart_upload {
+      days_after_initiation = 1
     }
-  }
-
-  tags = {
-    Product = "insight-support"
-    Name    = "insight-support-extensible-ingress-s3"
+    status = "Enabled"
   }
 }
 
