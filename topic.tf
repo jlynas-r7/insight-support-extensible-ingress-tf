@@ -24,7 +24,7 @@ data "aws_iam_policy_document" "sns_topic_policy" {
     condition {
       test     = "ArnLike"
       variable = "AWS:SourceArn"
-      values   = ["arn:aws:s3:*:*:insight-support-extensible-ingress-s3"]
+      values   = ["arn:aws:s3:*:*:insight-support-extensible-ingress-s3","arn:aws:s3:*:*:ext-ing*"]
     }
 
     effect = "Allow"
